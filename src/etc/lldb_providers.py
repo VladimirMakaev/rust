@@ -172,6 +172,56 @@ def StdStrSummaryProvider(valobj, dict):
     data = data.decode(encoding='UTF-8') if PY3 else data
     return '"%s"' % data
 
+class ClangEncodedEnumProvider:
+    """Pretty-printer for 'clang-encoded' enums support implemented in LLDB"""
+    DISCRIMINANT_MEMBER_NAME = "$discr$"
+    VALUE_MEMBER_NAME = "value"
+
+    def __init__(self, valobj, dict):
+        self.valobj = valobj
+
+    def _inner(self):
+        return self.valobj.GetChildAtIndex(0)
+    
+    def _getVariantByIndex(self, index):
+        return self._inner().GetChildAtIndex(index).GetChildMemberWithName(ClangEncodedEnumProvider.VALUE_MEMBER_NAME)
+    
+    def _getCurrentVariantIndex(self):
+        default_index = 0
+        for i in range(self._inner().GetNumChildren()):
+            variant = self._inner().GetChildAtIndex(i)
+            discr = variant.GetChildMemberWithName(ClangEncodedEnumProvider.DISCRIMINANT_MEMBER_NAME)
+            if discr.IsValid():
+                discr_unsigned_value = discr.GetValueAsUnsigned()
+                if variant.GetName() == f"$variant${discr_unsigned_value}":
+                    return discr_unsigned_value
+            else:
+                default_index = i
+        return default_index
+    
+    def num_children(self):
+        # type: () -> int
+        return 1
+
+    def get_child_index(self, name):
+        # type: (str) -> int
+        return 1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> lldb.SBValue
+        if index == 0:
+            return self._getVariantByIndex(self._getCurrentVariantIndex())
+        return None
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
+
+
 
 class StructSyntheticProvider:
     """Pretty-printer for structs and struct enum variants"""

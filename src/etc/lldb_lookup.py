@@ -79,6 +79,8 @@ def synthetic_lookup(valobj, dict):
     if rust_type == RustType.REGULAR_ENUM:
         discriminant = valobj.GetChildAtIndex(0).GetChildAtIndex(0).GetValueAsUnsigned()
         return synthetic_lookup(valobj.GetChildAtIndex(discriminant), dict)
+    if rust_type == RustType.ENUM:
+        return ClangEncodedEnumProvider(valobj, dict)
     if rust_type == RustType.SINGLETON_ENUM:
         return synthetic_lookup(valobj.GetChildAtIndex(0), dict)
 
