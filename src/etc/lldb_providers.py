@@ -172,6 +172,9 @@ def StdStrSummaryProvider(valobj, dict):
     data = data.decode(encoding='UTF-8') if PY3 else data
     return '"%s"' % data
 
+def EnumVariantSummaryProvider(valueobj, dict):
+    return valueobj.GetType().GetDisplayTypeName()
+
 class ClangEncodedEnumProvider:
     """Pretty-printer for 'clang-encoded' enums support implemented in LLDB"""
     DISCRIMINANT_MEMBER_NAME = "$discr$"
@@ -182,10 +185,10 @@ class ClangEncodedEnumProvider:
 
     def _inner(self):
         return self.valobj.GetChildAtIndex(0)
-    
+
     def _getVariantByIndex(self, index):
         return self._inner().GetChildAtIndex(index).GetChildMemberWithName(ClangEncodedEnumProvider.VALUE_MEMBER_NAME)
-    
+
     def _getCurrentVariantIndex(self):
         default_index = 0
         for i in range(self._inner().GetNumChildren()):
@@ -198,7 +201,7 @@ class ClangEncodedEnumProvider:
             else:
                 default_index = i
         return default_index
-    
+
     def num_children(self):
         # type: () -> int
         return 1
@@ -220,6 +223,9 @@ class ClangEncodedEnumProvider:
     def has_children(self):
         # type: () -> bool
         return True
+
+    def get_value(self):
+        return "HELLO"
 
 
 

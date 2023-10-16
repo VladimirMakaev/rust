@@ -91,8 +91,8 @@ def classify_struct(name, fields):
         if regex.match(name):
             return ty
 
-    # <<variant>> is only used by GDB providers while LLDB providers will start using $variants$ reusing the same RustType.Enum 
-    if fields[0].name == ENUM_DISR_FIELD_NAME or fields[0].name == ENUM_LLDB17_ENCODED_VARIANTS: 
+    # <<variant>> is only used by GDB providers while LLDB providers will start using $variants$ reusing the same RustType.Enum
+    if fields[0].name == ENUM_DISR_FIELD_NAME or fields[0].name == ENUM_LLDB_ENCODED_VARIANTS:
         return RustType.ENUM
 
     if is_tuple_fields(fields):

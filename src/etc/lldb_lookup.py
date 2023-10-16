@@ -1,7 +1,7 @@
 import lldb
 
 from lldb_providers import *
-from rust_types import RustType, classify_struct, classify_union
+from rust_types import classify_struct, classify_union, RustType
 
 
 # BACKCOMPAT: rust 1.35
@@ -57,6 +57,8 @@ def summary_lookup(valobj, dict):
 
     if rust_type == RustType.STD_NONZERO_NUMBER:
         return StdNonZeroNumberSummaryProvider(valobj, dict)
+    if rust_type == RustType.ENUM:
+        return lambda x, d: "Test"
 
     return ""
 
@@ -80,7 +82,9 @@ def synthetic_lookup(valobj, dict):
         discriminant = valobj.GetChildAtIndex(0).GetChildAtIndex(0).GetValueAsUnsigned()
         return synthetic_lookup(valobj.GetChildAtIndex(discriminant), dict)
     if rust_type == RustType.ENUM:
+        # return synthetic_lookup(get_enum_current_variant(valobj), dict)
         return ClangEncodedEnumProvider(valobj, dict)
+
     if rust_type == RustType.SINGLETON_ENUM:
         return synthetic_lookup(valobj.GetChildAtIndex(0), dict)
 
@@ -118,3 +122,18 @@ def synthetic_lookup(valobj, dict):
         return StdRefSyntheticProvider(valobj, dict, is_cell=True)
 
     return DefaultSyntheticProvider(valobj, dict)
+
+
+def get_enum_current_variant(valobj):
+    inner = valobj.GetChildAtIndex(0)
+    default_index = 0
+    for i in range(inner.GetNumChildren()):
+        variant = inner.GetChildAtIndex(i)
+        discr = variant.GetChildMemberWithName("$discr$")
+        if discr.IsValid():
+            discr_unsigned_value = discr.GetValueAsUnsigned()
+            if variant.GetName() == f"$variant${discr_unsigned_value}":
+                return variant
+        else:
+            default_index = i
+    return inner.GetChildAtIndex(default_index)
